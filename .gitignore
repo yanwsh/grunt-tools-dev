@@ -2,5 +2,6 @@ node_modules
 npm-debug.log
 tmp
 .idea
+.idea/*.*
 .tools.json
 .DS_Store
