@@ -16,6 +16,15 @@ module.exports = function(grunt) {
 
   // Project configuration.
   grunt.initConfig({
+    release: {
+      options: {
+        npm: true,
+        npmtag: false,
+        indentation: '\t',
+        tagName: 'v<%= version %>'
+      }
+    },
+
     jshint: {
       all: [
         'Gruntfile.js',
@@ -58,6 +67,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-nodeunit');
   grunt.loadNpmTasks('grunt-prompt');
+  grunt.loadNpmTasks('grunt-release');
 
   // Whenever the "test" task is run, first clean the "tmp" dir, then run this
   // plugin's task(s), then test the result.
