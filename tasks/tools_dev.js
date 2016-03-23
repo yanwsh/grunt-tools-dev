@@ -8,12 +8,16 @@
 
 'use strict';
 
-var request  = require('request'),
-    _        = require('underscore'),
-    jsonfile = require('jsonfile'),
-    inquirer = require('inquirer'),
-    Promise  = require('promise'),
-    async    = require("async");
+var request   = require('request'),
+    _         = require('underscore'),
+    jsonfile  = require('jsonfile'),
+    inquirer  = require('inquirer'),
+    Promise   = require('promise'),
+    path      = require("path"),
+    crypto    = require('crypto'),
+    tools_api = require('./tools_api.js'),
+    fs = require('fs'),
+    async     = require("async");
 
 var DEFAULT_CONFIG_FILE = ".tools.json";
 
@@ -28,7 +32,22 @@ module.exports = function(grunt) {
 
     var configFile = options.configFile;
     var campaignFile = options.campaignFile;
+    var createCampaign = grunt.option('create-campaign');
     var done = this.async();
+
+    //get files info according to the settings.
+    var files = [];
+    this.files.forEach(function(file) {
+      var cwd = file.cwd || '';
+      files = files.concat(file.src.map(function(src) {
+        var s = path.join(cwd, src);
+        var filepath = src.substr(0, src.lastIndexOf('/') + 1);
+        var filename_w_ext = src.replace(filepath, "");
+        var filename = filename_w_ext.substr(0, filename_w_ext.lastIndexOf('.'));
+
+        return {'path' : filepath, 'src':s, 'filename': filename, 'filenameWithExt': filename_w_ext};
+      }));
+    });
 
     function needSetting(){
       return function (answers) {
@@ -43,11 +62,18 @@ module.exports = function(grunt) {
 
     var settings = {};
     var campaign = {};
+    var creative = {};
 
     function handle_error(err) {
-      if(err)
-        grunt.fail.warn("Error: " + err);
+      if(err){
+        if(!(typeof err == "object" && err.message == "")){
+          grunt.fail.warn("Error:" + err);
+        }
+      }
+
       done();
+      //get rid of other error message.
+      throw new Error("");
     }
 
     new Promise(function (resolve, reject) {
@@ -107,7 +133,29 @@ module.exports = function(grunt) {
         resolve(settings);
       }
     }).then(function (settings) {
+      //create a campaign
+      grunt.verbose.writeln("creating campaign...");
+      if(createCampaign){
+        return new Promise(function (resolve, reject) {
+          if(createCampaign === true){
+            reject("You need to set a campaign name. Usuage --create-campaign=\"test-campaign\"");
+          }
+          tools_api.create_new_campaign(settings, createCampaign, function (error, result) {
+             if(error){
+               reject(error);
+             }else{
+               jsonfile.writeFileSync(campaignFile, result);
+               reject(false);
+             }
+          });
+        });
+      }
+
+      return settings;
+    }, handle_error)
+    .then(function (settings) {
       //get or set campaign file
+      grunt.verbose.writeln("get or set campaign from file...");
       if(!grunt.file.exists(campaignFile)){
         return new Promise(function (resolve, reject) {
           inquirer.prompt([
@@ -175,43 +223,82 @@ module.exports = function(grunt) {
           });
         });
       }else{
-        return jsonfile.readFileSync(campaignFile);
+        campaign = jsonfile.readFileSync(campaignFile);
+        return campaign;
       }
     }, handle_error)
-    .done(function (campaign) {
-      console.log(campaign);
+    .then(function (campaign) {
+        //get creative list first
+      grunt.verbose.writeln("getting creative list...");
+      return new Promise(function (resolve, reject) {
+        tools_api.get_creative_list(settings, campaign, function (error, result) {
+          if(error){
+            reject(error);
+          }
+          creative = result;
+          resolve(creative);
+        });
+      });
+    }, handle_error)
+    .then(function (creatives) {
+      grunt.verbose.writeln("compare creative and local files...");
+      //get txt files from settings and compare with local files
+      return new Promise(function (resolve, reject) {
+        var tasks = [];
+        files.forEach(function(f, index){
+          var creative = _.chain(creatives)
+                          .find(function(obj){
+                            return obj.creative_name == f.filename;
+                          })
+                          .value();
+          if(creative){
+            var localcontent = fs.readFileSync(f.src,'utf8');
+            var localmd5 = crypto.createHash('md5');
+            localmd5.update(localcontent);
+            var localmd5Hash = localmd5.digest('hex');
+            var remotemd5 = crypto.createHash('md5');
+            remotemd5.update(creative.content);
+            var remotemd5Hash = remotemd5.digest('hex');
+
+            if(localmd5Hash == remotemd5Hash){
+              grunt.log.writeln("skip " + f.src + ".");
+            }else{
+              creative.content = localcontent;
+              tasks.push(function (callback) {
+                tools_api.replace_files_to_campaign(settings, campaign, creative, function (error, result) {
+                  if(error){
+                    callback(error, null);
+                  }else{
+                    grunt.log.writeln("replace " + f.src + ".");
+                    callback(null, result);
+                  }
+                });
+              });
+            }
+          }else{
+            tasks.push(function (callback) {
+              tools_api.upload_files_to_campaign(settings, campaign,  f.src, function (error, result) {
+                if(error){
+                  callback(error, null);
+                }
+                grunt.log.writeln("upload " + f.src + ".");
+                callback(null, result);
+              });
+            });
+          }
+        });
+        async.parallel(tasks, function (err, results) {
+          if(err){
+            reject(err);
+          }
+          resolve(results);
+        });
+      });
+    }, handle_error)
+    .done(function () {
+      grunt.verbose.ok("done.");
        done();
     }, handle_error);
-
-
-
-/*
-    // Iterate over all specified file groups.
-    this.files.forEach(function(f) {
-      // Concat specified files.
-      var src = f.src.filter(function(filepath) {
-        // Warn on and remove invalid source files (if nonull was set).
-        if (!grunt.file.exists(filepath)) {
-          grunt.log.warn('Source file "' + filepath + '" not found.');
-          return false;
-        } else {
-          return true;
-        }
-      }).map(function(filepath) {
-        // Read file source.
-        return grunt.file.read(filepath);
-      }).join(grunt.util.normalizelf(options.separator));
-
-      // Handle options.
-      src += options.punctuation;
-
-      // Write the destination file.
-      grunt.file.write(f.dest, src);
-
-      // Print a success message.
-      grunt.log.writeln('File "' + f.dest + '" created.');
-    });
-    */
   });
 
 };

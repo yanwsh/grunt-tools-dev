@@ -6,3 +6,7 @@ tmp
 .tools.json
 campaign.json
 .DS_Store
+_local
+_local/*.*
+_public
+_public/*.*
