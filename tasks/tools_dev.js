@@ -19,9 +19,6 @@ var DEFAULT_CONFIG_FILE = ".tools.json";
 
 module.exports = function(grunt) {
 
-  // Please see the Grunt documentation for more information regarding task
-  // creation: http://gruntjs.com/creating-tasks
-
   grunt.registerMultiTask('tools_dev', 'automation tools for tools.complex.com', function() {
     // Merge task-specific and/or target-specific options with these defaults.
     var options = this.options({
@@ -45,127 +42,147 @@ module.exports = function(grunt) {
     }
 
     var settings = {};
+    var campaign = {};
 
-    if(!grunt.file.exists(configFile)){
-      grunt.verbose.write("Missing tools dev config file.");
-
-      inquirer.prompt([
-        {
-          type: "confirm",
-          name: "isSetting",
-          message: "Do you want to set it up right now?",
-          default: true
-        },
-        {
-          type: "input",
-          name: "toolsURL",
-          message: "Please input tools url link.",
-          default: "http://tools.complex.com/",
-          when: needSetting()
-        },
-        {
-          type: "input",
-          name: "token",
-          message: function(answer){
-            return "please input your token for " + answer["toolsURL"] + "."
-          },
-          when: needSetting(),
-          validate: function (input) {
-            var key = new Buffer(input, 'base64').toString('ascii');
-            var error_message = "The token which you provide is not valid. Please try again.";
-
-            var index = key.indexOf('.');
-            if(index <= 0){
-              return false;
-            }
-            var id = key.substring(0, index);
-            var realkey = key.substring(index + 1);
-            var result = (isNormalInteger(id) && realkey.length == 16)? true : error_message;
-            return result;
-          }
-        }
-      ], function(answer){
-        if(!answer.isSetting){
-          done();
-        }else{
-          settings = {
-            url: answer.toolsURL,
-            token: answer.token
-          };
-          jsonfile.writeFileSync(configFile, settings);
-        }
-      });
-    }else{
-      settings = jsonfile.readFileSync(configFile);
+    function handle_error(err) {
+      if(err)
+        grunt.fail.warn("Error: " + err);
+      done();
     }
-    
-    function question_campaign_id() {
-      return new Promise(function(fulfill, reject){
+
+    new Promise(function (resolve, reject) {
+      //get or set config file
+      if(!grunt.file.exists(configFile)){
+        grunt.log.errorlns("Missing tools dev config file.");
+
         inquirer.prompt([
           {
+            type: "confirm",
+            name: "isSetting",
+            message: "Do you want to set it up right now?",
+            default: true
+          },
+          {
             type: "input",
-            name: "campaignId",
-            message: "Please input campaign id."
-          }
-        ], function (answer) {
-          fulfill(answer.campaignId);
-        });
-      });
-    }
-
-    var campaign = {};
-    if(!grunt.file.exists(campaignFile)){
-      inquirer.prompt([
-        {
-          type: "confirm",
-          name: "isSetting",
-          message: "You didn't bind any campaign right now. Do you want to bind a campaign?",
-          default: true
-        }
-      ], function (answer) {
-        if(!answer.isSetting){
-          done();
-        }else{
-          question_campaign_id()
-          .then(function (id) {
-            console.log("id: " +id);
-            var link = 'campaigns/' + id;
-            var options = {
-              method: 'GET',
-              url: link,
-              baseUrl: settings.url,
-              jar: true,
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36',
-                'X-Requested-With': 'XMLHttpRequest',
-                'auth-token': settings.token
+            name: "toolsURL",
+            message: "Please input tools url link.",
+            default: "http://tools.complex.com/",
+            when: needSetting()
+          },
+          {
+            type: "input",
+            name: "token",
+            message: function(answer){
+              return "please input your token for " + answer["toolsURL"] + "."
+            },
+            when: needSetting(),
+            validate: function (input) {
+              var key = new Buffer(input, 'base64').toString('ascii');
+              var error_message = "The token which you provide is not valid. Please try again.";
+  
+              var index = key.indexOf('.');
+              if(index <= 0){
+                return false;
               }
+              var id = key.substring(0, index);
+              var realkey = key.substring(index + 1);
+              var result = (isNormalInteger(id) && realkey.length == 16)? true : error_message;
+              return result;
+            }
+          }
+        ], function(answer){
+          if(!answer.isSetting){
+            reject(false);
+          }else{
+            settings = {
+              url: answer.toolsURL,
+              token: answer.token
             };
-             return new Promise(function (fulfill, reject) {
-               request(options, function (error, response, body) {
-                 if(error){
-                   reject(error);
-                 }
-                 try{
-                   fulfill(JSON.parse(body));
-                 }
-                 catch(e){
-                   reject(error);
-                 }
-               });
-             });
-          })
-          .then(function (data) {
-            console.log(data);
-            done();
-          })
-          .catch(function (data) {
-            grunt.fail.warn("Something wrong, Error message: " + data);
-            done();
+            jsonfile.writeFileSync(configFile, settings);
+            resolve(settings);
+          }
+        });
+      }else{
+        settings = jsonfile.readFileSync(configFile);
+        resolve(settings);
+      }
+    }).then(function (settings) {
+      //get or set campaign file
+      if(!grunt.file.exists(campaignFile)){
+        return new Promise(function (resolve, reject) {
+          inquirer.prompt([
+            {
+              type: "confirm",
+              name: "isSetting",
+              message: "You didn't bind any campaign. Do you want to bind a campaign?",
+              default: true
+            }
+          ], function (answer) {
+            if(!answer.isSetting){
+              reject(false);
+            }
+            resolve(answer.isSetting);
           });
-        }
-      });
-    }
+        }).then(function () {
+          return new Promise(function (resolve, reject) {
+            async.retry(3,
+                function (callback, result) {
+                  inquirer.prompt([
+                    {
+                      type: "input",
+                      name: "campaignId",
+                      message: "Please input campaign id: "
+                    }
+                  ], function (answer) {
+                    var link = 'api/campaigns/' + answer.campaignId;
+                    var options = {
+                      method: 'GET',
+                      url: link,
+                      baseUrl: settings.url,
+                      jar: true,
+                      headers: {
+                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'auth-token': settings.token
+                      }
+                    };
+                    request(options, function (error, response, body) {
+                      if(error){
+                        callback(error, null);
+                      }
+                      try{
+                        var obj = JSON.parse(body);
+                        var error;
+                        if(obj.errors){
+                          error = obj.errors.message;
+                          grunt.log.errorlns("Error:" + error);
+                        }
+                        callback(error, obj);
+                      }
+                      catch(e){
+                        callback(error, null);
+                      }
+                    });
+                  });
+                },
+                function (err, result) {
+                  if(err) reject(err);
+                  campaign = result;
+                  jsonfile.writeFileSync(campaignFile, campaign);
+                  resolve(campaign);
+                }
+            );
+          });
+        });
+      }else{
+        return jsonfile.readFileSync(campaignFile);
+      }
+    }, handle_error)
+    .done(function (campaign) {
+      console.log(campaign);
+       done();
+    }, handle_error);
+
 
 
 /*
