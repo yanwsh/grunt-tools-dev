@@ -70,7 +70,7 @@ module.exports = function(grunt) {
       }
 
       done();
-      //get rid of other error message.
+      //get rid of other error message and prevent continue running.
       return Promise.reject(false);	
     }
 
@@ -144,7 +144,7 @@ module.exports = function(grunt) {
              }else{
                grunt.log.writeln("campaign name: " + createCampaign + " created on tools.");
                jsonfile.writeFileSync(campaignFile, result);
-               reject(false);
+	       done();
              }
           });
         });
