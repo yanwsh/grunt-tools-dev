@@ -66,14 +66,12 @@ module.exports = function(grunt) {
 
     function handle_error(err) {
       if(err){
-        if(!(typeof err == "object" && err.message == "")){
-          grunt.fail.warn("Error:" + err);
-        }
+	grunt.fail.warn("Error:" + err);
       }
 
       done();
       //get rid of other error message.
-      throw new Error("");
+      return Promise.reject(false);	
     }
 
     new Promise(function (resolve, reject) {
