@@ -1,7 +1,7 @@
 {
   "name": "grunt-tools-dev",
   "description": "automation tools for tools.complex.com",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "homepage": "https://github.com/yanwsh/grunt-tools-dev",
   "author": {
     "name": "Wensheng Yan",
