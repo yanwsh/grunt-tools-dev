@@ -5,6 +5,8 @@
         fs = require('fs'),
         _ = require('underscore');
 
+    var user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36";
+
     function result_export(cb){
         return function(error, response, body) {
             var result = JSON.parse(body);
@@ -27,7 +29,7 @@
                 baseUrl: $settings.url,
                 jar: true,
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36',
+                    'User-Agent': user_agent,
                     'X-Requested-With': 'XMLHttpRequest',
                     'auth-token': $settings.token
                 },
@@ -47,7 +49,7 @@
                 baseUrl: $settings.url,
                 jar: true,
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36',
+                    'User-Agent': user_agent,
                     'X-Requested-With': 'XMLHttpRequest',
                     'auth-token': $settings.token
                 }
@@ -64,7 +66,7 @@
                 baseUrl: $settings.url,
                 jar: true,
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36',
+                    'User-Agent': user_agent,
                     'X-Requested-With': 'XMLHttpRequest',
                     'auth-token': $settings.token,
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -84,7 +86,7 @@
                 baseUrl: $settings.url,
                 jar: true,
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36',
+                    'User-Agent': user_agent,
                     'X-Requested-With': 'XMLHttpRequest',
                     'auth-token': $settings.token
                 },
