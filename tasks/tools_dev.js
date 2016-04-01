@@ -144,7 +144,7 @@ module.exports = function(grunt) {
              }else{
                grunt.log.writeln("campaign name: " + createCampaign + " created on tools.");
                jsonfile.writeFileSync(campaignFile, result);
-	       done();
+	           done();
              }
           });
         });
