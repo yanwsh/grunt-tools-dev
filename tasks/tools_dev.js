@@ -131,9 +131,9 @@ module.exports = function(grunt) {
         resolve(settings);
       }
     }).then(function (settings) {
-      //create a campaign
-      grunt.verbose.writeln("creating campaign...");
       if(createCampaign){
+        //create a campaign
+        grunt.verbose.writeln("creating campaign...");
         return new Promise(function (resolve, reject) {
           if(createCampaign === true){
             reject("You need to set a campaign name. Usuage --create-campaign=\"test-campaign\"");

@@ -3,18 +3,31 @@
 
     var request   = require('request'),
         fs = require('fs'),
+        path = require('path'),
         _ = require('underscore');
 
     var user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36";
+    var caFile = fs.readFileSync(path.resolve(__dirname, '../ssl/complex_ca.pem'));
 
     function result_export(cb){
         return function(error, response, body) {
-            var result = JSON.parse(body);
-            if (!error && (response.statusCode === 200 || response.statusCode === 201)) {
-                cb(null, result);
-            } else {
-                var error_message = (result.errors)? result.errors.message: error || body;
-                cb(error_message, null);
+            if(error){
+                cb(error.message, null);
+            }
+            try{
+                if(typeof body === 'undefined'){
+                    throw new Error("No response from remote.");
+                }
+                var result = JSON.parse(body);
+                if (!error && (response.statusCode === 200 || response.statusCode === 201)) {
+                    cb(null, result);
+                } else {
+                    var error_message = (result.errors)? result.errors.message: error || body;
+                    cb(error_message, null);
+                }
+            }
+            catch(e){
+                cb(e.message, null);
             }
         }
     }
@@ -27,6 +40,9 @@
                 method: 'POST',
                 url: api_link,
                 baseUrl: $settings.url,
+                agentOptions: {
+                    ca: caFile
+                },
                 jar: true,
                 headers: {
                     'User-Agent': user_agent,
@@ -47,6 +63,9 @@
                 method: 'GET',
                 url: api_link,
                 baseUrl: $settings.url,
+                agentOptions: {
+                    ca: caFile
+                },
                 jar: true,
                 headers: {
                     'User-Agent': user_agent,
@@ -64,6 +83,9 @@
                 method: 'POST',
                 url: api_link,
                 baseUrl: $settings.url,
+                agentOptions: {
+                    ca: caFile
+                },
                 jar: true,
                 headers: {
                     'User-Agent': user_agent,
@@ -84,6 +106,9 @@
                 method: 'PUT',
                 url: api_link,
                 baseUrl: $settings.url,
+                agentOptions: {
+                    ca: caFile
+                },
                 jar: true,
                 headers: {
                     'User-Agent': user_agent,
