@@ -90,7 +90,7 @@ module.exports = function(grunt) {
             type: "input",
             name: "toolsURL",
             message: "Please input tools url link.",
-            default: "http://tools.complex.com/",
+            default: "https://tools.complex.com/",
             when: needSetting()
           },
           {
