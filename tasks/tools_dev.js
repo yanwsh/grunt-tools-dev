@@ -253,6 +253,7 @@ module.exports = function(grunt) {
           if(creative){
             var localcontent = fs.readFileSync(f.src,'utf8');
             var localmd5 = crypto.createHash('md5');
+            localcontent = localcontent.replace(/\r/g, "");
             localmd5.update(localcontent);
             var localmd5Hash = localmd5.digest('hex');
             var remotemd5 = crypto.createHash('md5');
