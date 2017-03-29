@@ -7,7 +7,14 @@
         _ = require('underscore');
 
     var user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36";
-    var caFile = [fs.readFileSync(path.resolve(__dirname, '../ssl/complex_ca.pem')), fs.readFileSync(path.resolve(__dirname, '../ssl/comodo.pem')), fs.readFileSync(path.resolve(__dirname, '../ssl/COMODORSACertificationAuthority.pem'))];
+    var caFile = [
+        fs.readFileSync(path.resolve(__dirname, '../ssl/complex_ca.pem')),
+        fs.readFileSync(path.resolve(__dirname, '../ssl/comodo.pem')),
+        fs.readFileSync(path.resolve(__dirname, '../ssl/COMODORSACertificationAuthority.pem')),
+        fs.readFileSync(path.resolve(__dirname, '../ssl/AmazonRootCA1.pem')),
+        fs.readFileSync(path.resolve(__dirname, '../ssl/Amazon.pem')),
+        fs.readFileSync(path.resolve(__dirname, '../ssl/complexcom.pem'))
+    ];
 
     function result_export(cb){
         return function(error, response, body) {
