@@ -271,6 +271,12 @@ module.exports = function(grunt) {
                   }else{
                     grunt.log.writeln("replace " + f.src + ".");
                     callback(null, result);
+                    if (result.is_staging === true) {
+                      grunt.log.writeln('\n-----------------------------------------------');
+                      grunt.log.writeln(result.creative_name + " IS IN STAGING."["red"].bold);
+                      grunt.log.writeln("PLEASE GO TO"["yellow"] + " tools.complex.com/" + result.campaign_id + " TO PUBLISH IT."["yellow"]);
+                      grunt.log.writeln('-----------------------------------------------\n');
+                    }
                   }
                 });
               });
