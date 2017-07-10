@@ -110,7 +110,7 @@ module.exports = function(grunt) {
               }
               var id = key.substring(0, index);
               var realkey = key.substring(index + 1);
-              var result = (isNormalInteger(id) && realkey.length == 16)? true : error_message;
+              var result = (isNormalInteger(id) && realkey.length === 16)? true : error_message;
               return result;
             }
           }
@@ -247,7 +247,7 @@ module.exports = function(grunt) {
         files.forEach(function(f, index){
           var creative = _.chain(creatives)
                           .find(function(obj){
-                            return obj.creative_name == f.filename;
+                            return obj.creative_name === f.filename;
                           })
                           .value();
           if(creative){
@@ -260,7 +260,7 @@ module.exports = function(grunt) {
             remotemd5.update(creative.content);
             var remotemd5Hash = remotemd5.digest('hex');
 
-            if(localmd5Hash == remotemd5Hash){
+            if(localmd5Hash === remotemd5Hash){
               grunt.log.writeln("skip " + f.src + ".");
             }else{
               creative.content = localcontent;
@@ -270,6 +270,12 @@ module.exports = function(grunt) {
                     callback(error, null);
                   }else{
                     grunt.log.writeln("replace " + f.src + ".");
+                    if (result.is_staging === true) {
+                        grunt.log.writeln('\n-----------------------------------------------');
+                        grunt.log.writeln(result.creative_name + " IS IN STAGING."["red"].bold);
+                        grunt.log.writeln("PLEASE GO TO"["yellow"] + " https://tools.complex.com/" + result.campaign_id + " TO PUBLISH IT."["yellow"]);
+                        grunt.log.writeln('-----------------------------------------------\n');
+                    }
                     callback(null, result);
                   }
                 });
