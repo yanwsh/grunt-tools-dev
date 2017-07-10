@@ -267,7 +267,7 @@ module.exports = function(grunt) {
               tasks.push(function (callback) {
                 tools_api.replace_files_to_campaign(settings, campaign, creative, function (error, result) {
                   if(error){
-                    callback(error, null);
+                    return callback(error, null);
                   }else{
                     grunt.log.writeln("replace " + f.src + ".");
                     if (result.is_staging === true) {
@@ -285,7 +285,7 @@ module.exports = function(grunt) {
             tasks.push(function (callback) {
               tools_api.upload_files_to_campaign(settings, campaign,  f.src, function (error, result) {
                 if(error){
-                  callback(error, null);
+                  return callback(error, null);
                 }
                 grunt.log.writeln("upload " + f.src + ".");
                 callback(null, result);
@@ -295,7 +295,7 @@ module.exports = function(grunt) {
         });
         async.parallel(tasks, function (err, results) {
           if(err){
-            reject(err);
+            return reject(err);
           }
           resolve(results);
         });
