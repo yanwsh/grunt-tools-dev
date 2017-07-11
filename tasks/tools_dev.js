@@ -273,7 +273,7 @@ module.exports = function(grunt) {
                     if (result.is_staging === true) {
                         grunt.log.writeln('\n-----------------------------------------------');
                         grunt.log.writeln(result.creative_name + " IS IN STAGING."["red"].bold);
-                        grunt.log.writeln("PLEASE GO TO"["yellow"] + " https://tools.complex.com/" + result.campaign_id + " TO PUBLISH IT."["yellow"]);
+                        grunt.log.writeln("PLEASE GO TO"["yellow"] + " https://tools.complex.com/campaigns/" + result.campaign_id + " TO PUBLISH IT."["yellow"]);
                         grunt.log.writeln('-----------------------------------------------\n');
                     }
                     callback(null, result);
